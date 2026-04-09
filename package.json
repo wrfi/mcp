@@ -1,0 +1,22 @@
+{
+  "name": "@wrfi/mcp",
+  "version": "1.0.0",
+  "description": "MCP server for wr.fi — push, read, update, diff, and hand off AI creations",
+  "bin": {
+    "wrfi-mcp": "./mcp.js"
+  },
+  "type": "module",
+  "license": "Apache-2.0",
+  "homepage": "https://wr.fi",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wrfi/mcp"
+  },
+  "keywords": ["mcp", "model-context-protocol", "ai", "wr.fi", "wrfi", "agent-handoff"],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
