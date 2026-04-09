@@ -12,29 +12,34 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { push, read, readRaw, update, diff, history } from "./lib/api.js";
+import { push, read, readRaw, readHandoff, update, diff, history } from "./lib/api.js";
 
 const TOOLS = [
   {
     name: "wrfi_push",
-    description: "Create a new creation on wr.fi. Returns a short URL. No auth required for anonymous pushes (30-day expiry). Set secure:true for an 8-char unguessable URL.",
+    description: "Push content to wr.fi. Returns a URL + handoff bundle for agent-to-agent transfer. No auth needed for anonymous (30-day expiry). Response includes handoff.url for the next agent.",
     inputSchema: {
       type: "object",
       required: ["title", "content"],
       properties: {
         title: { type: "string", description: "Title for the creation" },
-        content: { type: "string", description: "Text content (no base64 needed)" },
-        contentType: { type: "string", description: "Type: code, text, image, audio, video, document. Auto-detected if omitted." },
-        secure: { type: "boolean", description: "Generate 8-char unguessable URL (default: 4-char)" },
-        unlisted: { type: "boolean", description: "Hide from public feed" },
+        content: { type: "string", description: "Text content (no base64 needed). Language auto-detected." },
+        contentType: { type: "string", description: "Type: code, text, image, audio, video. Auto-detected if omitted." },
+        description: { type: "string", description: "Brief description for discoverability" },
+        tags: { type: "array", items: { type: "string" }, description: "Tags for categorization" },
+        project: { type: "string", description: "Project name for grouping related creations" },
+        handoffMessage: { type: "string", description: "Note for the next agent — what was done, what to do next" },
+        secure: { type: "boolean", description: "8-char secret link (default: 4-char)" },
+        unlisted: { type: "boolean", description: "Hide from explore and search" },
         password: { type: "string", description: "Password-protect the creation" },
-        apiKey: { type: "string", description: "API key for permanent (non-expiring) creation" },
+        dryRun: { type: "boolean", description: "Validate without persisting" },
+        apiKey: { type: "string", description: "API key for permanent creation" },
       },
     },
   },
   {
     name: "wrfi_push_secure",
-    description: "Create a creation with an 8-char unguessable URL. Shorthand for wrfi_push with secure:true.",
+    description: "Push with an 8-char secret link. Shorthand for wrfi_push with secure:true.",
     inputSchema: {
       type: "object",
       required: ["title", "content"],
@@ -42,7 +47,8 @@ const TOOLS = [
         title: { type: "string", description: "Title for the creation" },
         content: { type: "string", description: "Text content" },
         contentType: { type: "string" },
-        password: { type: "string", description: "Password-protect the creation" },
+        handoffMessage: { type: "string", description: "Note for the next agent" },
+        password: { type: "string" },
         apiKey: { type: "string" },
       },
     },
@@ -63,7 +69,7 @@ const TOOLS = [
   },
   {
     name: "wrfi_update",
-    description: "Update an existing creation (creates a new version, same URL). Requires edit token or API key.",
+    description: "Update an existing creation (new version, same URL). Returns updated handoff bundle. Requires edit token or API key.",
     inputSchema: {
       type: "object",
       required: ["shortId", "content"],
@@ -72,7 +78,8 @@ const TOOLS = [
         content: { type: "string", description: "New text content" },
         editToken: { type: "string", description: "2-word edit token (e.g. Blue-Castle)" },
         apiKey: { type: "string", description: "API key (alternative to edit token)" },
-        message: { type: "string", description: "Version note (like a commit message)" },
+        message: { type: "string", description: "Version note (what changed)" },
+        handoffMessage: { type: "string", description: "Note for the next agent (what to do next)" },
         expectedVersion: { type: "number", description: "Reject if version mismatch (409). Omit for last-write-wins." },
       },
     },
@@ -114,6 +121,20 @@ const TOOLS = [
       required: ["shortId"],
       properties: {
         shortId: { type: "string", description: "Short ID of the creation" },
+      },
+    },
+  },
+  {
+    name: "wrfi_handoff",
+    description: "Read the handoff view for a creation — structured text with content, history, context, and update instructions. Use this to pick up work from another agent.",
+    inputSchema: {
+      type: "object",
+      required: ["shortId"],
+      properties: {
+        shortId: { type: "string", description: "Short ID of the creation" },
+        compact: { type: "boolean", description: "Compact mode — skip verbose update instructions (saves tokens)" },
+        password: { type: "string" },
+        editToken: { type: "string" },
       },
     },
   },
@@ -171,6 +192,9 @@ async function handleTool(name, args) {
       const res = await fetch(`${base}/api/neighborhood/${args.shortId}`);
       return await res.json();
     }
+
+    case "wrfi_handoff":
+      return await readHandoff(args.shortId, args);
 
     case "wrfi_history":
       return await history(args.shortId, args);
