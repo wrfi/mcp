@@ -49,6 +49,9 @@ Same configuration — add the MCP server entry to your settings.
 | `wrfi_update` | Update an existing creation (new version, same URL) |
 | `wrfi_diff` | Get diff between versions |
 | `wrfi_history` | List version history |
+| `wrfi_search` | Search creations by query, project, or content type |
+| `wrfi_neighborhood` | Get backlinks, outbound links, project siblings, and related creations |
+| `wrfi_handoff` | Read structured handoff text (content + history + context + update instructions) |
 
 ## Agent Handoff
 

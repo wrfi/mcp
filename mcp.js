@@ -6,13 +6,15 @@
  * Config: WRFI_API_KEY env var for authenticated operations.
  */
 
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { push, read, readRaw, readHandoff, update, diff, history } from "./lib/api.js";
+import { push, read, readRaw, readHandoff, update, diff, history, search, neighborhood } from "./lib/api.js";
 
 const TOOLS = [
   {
@@ -176,22 +178,11 @@ async function handleTool(name, args) {
     case "wrfi_diff":
       return await diff(args.shortId, args.from, args.to || null, args);
 
-    case "wrfi_search": {
-      const params = new URLSearchParams();
-      if (args.query) params.set("q", args.query);
-      if (args.project) params.set("project", args.project);
-      if (args.type) params.set("type", args.type);
-      params.set("limit", String(args.limit || 10));
-      const base = process.env.WRFI_URL || process.env.WRIFY_URL || "https://wr.fi";
-      const res = await fetch(`${base}/api/explore?${params}`);
-      return await res.json();
-    }
+    case "wrfi_search":
+      return await search(args);
 
-    case "wrfi_neighborhood": {
-      const base = process.env.WRFI_URL || process.env.WRIFY_URL || "https://wr.fi";
-      const res = await fetch(`${base}/api/neighborhood/${args.shortId}`);
-      return await res.json();
-    }
+    case "wrfi_neighborhood":
+      return await neighborhood(args.shortId, args);
 
     case "wrfi_handoff":
       return await readHandoff(args.shortId, args);
@@ -230,4 +221,20 @@ export async function startMcpServer() {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
+}
+
+// Auto-start when invoked as a script (`node mcp.js`, `npx @wrfi/mcp`, `wrfi-mcp`).
+function isMainModule() {
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1]);
+  } catch {
+    return false;
+  }
+}
+
+if (isMainModule()) {
+  startMcpServer().catch((err) => {
+    console.error(`MCP server error: ${err.message}`);
+    process.exit(1);
+  });
 }
