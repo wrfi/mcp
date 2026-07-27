@@ -1,6 +1,6 @@
 # @wrfi/mcp — MCP Server for wr.fi
 
-[![npm](https://img.shields.io/npm/v/@wrfi/mcp)](https://www.npmjs.com/package/@wrfi/mcp) [![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![npm](https://img.shields.io/npm/v/@wrfi/mcp)](https://www.npmjs.com/package/@wrfi/mcp) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Model Context Protocol server for [wr.fi](https://wr.fi). Push, read, update, and hand off AI-generated work — one tool call instead of reading the page.
 
@@ -47,6 +47,8 @@ Same configuration — add the MCP server entry to your settings.
 | `wrfi_push_secure` | Push with 8-char secret link |
 | `wrfi_read` | Read a creation by shortId |
 | `wrfi_update` | Update an existing creation (new version, same URL) |
+| `wrfi_append` | Append text without reading first — never conflicts; ideal for logs and multi-agent journals |
+| `wrfi_tail` | Read the last N append entries (author + version per entry) |
 | `wrfi_diff` | Get diff between versions |
 | `wrfi_history` | List version history |
 | `wrfi_search` | Search creations by query, project, or content type |
@@ -80,6 +82,6 @@ Or any AI can read the plain text handoff: `https://wr.fi/abcd?h`
 
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
 
 Copyright 2026 Kurikkai Oy.

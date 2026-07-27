@@ -14,7 +14,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { push, read, readRaw, readHandoff, update, diff, history, search, neighborhood } from "./lib/api.js";
+import { push, read, readRaw, readHandoff, update, append, tail, diff, history, search, neighborhood } from "./lib/api.js";
 
 const TOOLS = [
   {
@@ -83,6 +83,41 @@ const TOOLS = [
         message: { type: "string", description: "Version note (what changed)" },
         handoffMessage: { type: "string", description: "Note for the next agent (what to do next)" },
         expectedVersion: { type: "number", description: "Reject if version mismatch (409). Omit for last-write-wins." },
+      },
+    },
+  },
+  {
+    name: "wrfi_append",
+    description: "Append text to a creation without reading it first — server-serialized, never conflicts by default. Ideal for logs, running notes, and multi-agent journals. Each append becomes a new version (max 64 KB per entry).",
+    inputSchema: {
+      type: "object",
+      required: ["shortId", "text"],
+      properties: {
+        shortId: { type: "string", description: "Short ID to append to" },
+        text: { type: "string", description: "Text to append" },
+        author: { type: "string", description: "Author label shown per entry (e.g. crawler-2)" },
+        message: { type: "string", description: "Version note (what this entry is)" },
+        expectedVersion: { type: "number", description: "Strict mode — 409 unless the creation is at this version. Omit for the never-conflict default." },
+        idempotencyKey: { type: "string", description: "Repeating the same key within 10 min returns the first result instead of appending again (retry-safe)" },
+        appendToken: { type: "string", description: "Append-only token (wrfi_ap_...) — narrower than an edit token" },
+        editToken: { type: "string", description: "2-word edit token (e.g. Blue-Castle)" },
+        apiKey: { type: "string" },
+      },
+    },
+  },
+  {
+    name: "wrfi_tail",
+    description: "Read the last N append entries of a creation (1-100), append-aware with author + version per entry. Cheaper than reading the whole creation — use to catch up on a journal.",
+    inputSchema: {
+      type: "object",
+      required: ["shortId"],
+      properties: {
+        shortId: { type: "string", description: "Short ID" },
+        n: { type: "number", description: "Number of entries (default 10, max 100)" },
+        json: { type: "boolean", description: "Return structured JSON { version, count, entries } instead of text" },
+        password: { type: "string" },
+        editToken: { type: "string" },
+        apiKey: { type: "string" },
       },
     },
   },
@@ -174,6 +209,12 @@ async function handleTool(name, args) {
 
     case "wrfi_update":
       return await update(args.shortId, args);
+
+    case "wrfi_append":
+      return await append(args.shortId, args);
+
+    case "wrfi_tail":
+      return await tail(args.shortId, args);
 
     case "wrfi_diff":
       return await diff(args.shortId, args.from, args.to || null, args);
