@@ -240,7 +240,8 @@ async function handleTool(name, args) {
 
 export async function startMcpServer() {
   const server = new Server(
-    { name: "wrfi", version: "1.0.0" },
+    // Keep in lockstep with package.json — this is what MCP clients display.
+    { name: "wrfi", version: "1.1.0" },
     { capabilities: { tools: {} } }
   );
 
