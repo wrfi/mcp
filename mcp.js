@@ -267,7 +267,7 @@ export async function startMcpServer() {
   await server.connect(transport);
 }
 
-// Auto-start when invoked as a script (`node mcp.js`, `npx @wrfi/mcp`, `wrfi-mcp`).
+// Auto-start when invoked as a script (`node mcp.js`, `npx wrfi-mcp`, `wrfi-mcp`).
 function isMainModule() {
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1]);

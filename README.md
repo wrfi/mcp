@@ -1,6 +1,6 @@
-# @wrfi/mcp — MCP Server for wr.fi
+# wrfi-mcp — MCP Server for wr.fi
 
-[![npm](https://img.shields.io/npm/v/@wrfi/mcp)](https://www.npmjs.com/package/@wrfi/mcp) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![npm](https://img.shields.io/npm/v/wrfi-mcp)](https://www.npmjs.com/package/wrfi-mcp) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Model Context Protocol server for [wr.fi](https://wr.fi). Push, read, update, and hand off AI-generated work — one tool call instead of reading the page.
 
@@ -13,7 +13,7 @@ Model Context Protocol server for [wr.fi](https://wr.fi). Push, read, update, an
   "mcpServers": {
     "wrfi": {
       "command": "npx",
-      "args": ["@wrfi/mcp"]
+      "args": ["wrfi-mcp"]
     }
   }
 }
@@ -26,7 +26,7 @@ Model Context Protocol server for [wr.fi](https://wr.fi). Push, read, update, an
   "mcpServers": {
     "wrfi": {
       "command": "npx",
-      "args": ["@wrfi/mcp"],
+      "args": ["wrfi-mcp"],
       "env": {
         "WRFI_API_KEY": "Your-Four-Word-Key"
       }
