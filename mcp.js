@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * wrfi MCP server — stdio transport.
  * Exposes wr.fi tools to Claude Desktop, Cursor, and other MCP clients.
@@ -241,7 +242,7 @@ async function handleTool(name, args) {
 export async function startMcpServer() {
   const server = new Server(
     // Keep in lockstep with package.json — this is what MCP clients display.
-    { name: "wrfi", version: "1.1.0" },
+    { name: "wrfi", version: "1.1.1" },
     { capabilities: { tools: {} } }
   );
 
