@@ -215,7 +215,8 @@ async function handleTool(name, args) {
       return await append(args.shortId, args);
 
     case "wrfi_tail":
-      return await tail(args.shortId, args);
+      // Shared api.js tail(shortId, n, opts) — clamp n to the server's 1-100.
+      return await tail(args.shortId, Math.min(Math.max(args.n ?? 10, 1), 100), args);
 
     case "wrfi_diff":
       return await diff(args.shortId, args.from, args.to || null, args);
