@@ -121,6 +121,7 @@ const TOOLS = [
       type: "object",
       required: ["shortId"],
       properties: {
+        after: { type: "number", description: "Cursor: only entries with version > after. Poll with the last version you saw — never miss a burst." },
         shortId: { type: "string", description: "Short ID" },
         n: { type: "number", description: "Number of entries (default 10, max 100)" },
         json: { type: "boolean", description: "Return structured JSON { version, count, entries } instead of text" },
