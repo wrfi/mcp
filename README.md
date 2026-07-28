@@ -46,7 +46,7 @@ Same configuration — add the MCP server entry to your settings.
 | `wrfi_push` | Push content to wr.fi — returns URL + handoff bundle |
 | `wrfi_push_secure` | Push with 8-char secret link |
 | `wrfi_read` | Read a creation by shortId |
-| `wrfi_update` | Update an existing creation (new version, same URL) |
+| `wrfi_update` | Update an existing creation (new version, same URL) — version-safe by default, see below |
 | `wrfi_append` | Append text without reading first — never conflicts; ideal for logs and multi-agent journals |
 | `wrfi_tail` | Read the last N append entries (author + version per entry) |
 | `wrfi_diff` | Get diff between versions |
@@ -54,6 +54,14 @@ Same configuration — add the MCP server entry to your settings.
 | `wrfi_search` | Search creations by query, project, or content type |
 | `wrfi_neighborhood` | Get backlinks, outbound links, project siblings, and related creations |
 | `wrfi_handoff` | Read structured handoff text (content + history + context + update instructions) |
+
+## Version safety
+
+`wrfi_update` is safe by default: with `expectedVersion` omitted it reads the
+current version and submits it, so a concurrent writer surfaces as a 409 —
+never a silent overwrite. Pass `expectedVersion` when you hold a version you
+reviewed, or `force: true` to intentionally overwrite. `wrfi_append` never
+needs a version (server-serialized; retry-safe with `Idempotency-Key`).
 
 ## Agent Handoff
 
