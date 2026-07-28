@@ -48,7 +48,7 @@ Same configuration — add the MCP server entry to your settings.
 | `wrfi_read` | Read a creation by shortId |
 | `wrfi_update` | Update an existing creation (new version, same URL) — version-safe by default, see below |
 | `wrfi_append` | Append text without reading first — never conflicts; ideal for logs and multi-agent journals |
-| `wrfi_tail` | Read the last N append entries (author + version per entry) |
+| `wrfi_catchup, wrfi_tail` | Read the last N append entries (author + version per entry) |
 | `wrfi_diff` | Get diff between versions |
 | `wrfi_history` | List version history |
 | `wrfi_search` | Search creations by query, project, or content type |

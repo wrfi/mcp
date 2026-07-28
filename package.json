@@ -1,6 +1,6 @@
 {
   "name": "wrfi-mcp",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "MCP server for wr.fi \u2014 push, read, update, diff, and hand off AI creations",
   "bin": {
     "wrfi-mcp": "./mcp.js"

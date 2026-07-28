@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import crypto from "node:crypto";
 /**
  * wrfi MCP server — stdio transport.
  * Exposes wr.fi tools to Claude Desktop, Cursor, and other MCP clients.
@@ -15,7 +16,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { push, read, readRaw, readHandoff, update, append, tail, diff, history, search, neighborhood } from "./lib/api.js";
+import { push, read, readRaw, readHandoff, update, append, tail, diff, history, search, neighborhood, catchup } from "./lib/api.js";
 
 const TOOLS = [
   {
@@ -35,6 +36,9 @@ const TOOLS = [
         secure: { type: "boolean", description: "8-char secret link (default: 4-char)" },
         unlisted: { type: "boolean", description: "Hide from explore and search" },
         password: { type: "string", description: "Password-protect the creation" },
+        status: { type: "string", enum: ["open", "done", "needs-human"], description: "Relay status — open: wants a next leg; done: complete; needs-human: waiting on a person" },
+        task: { type: "object", description: "Workflow-state layer: { objective, requestedAction, completed[], openQuestions[], decisions[], risks[{severity,text}], acceptanceCriteria[] }. Inherited across versions unless replaced; null clears." },
+        environment: { type: "object", description: "The workspace the next agent needs: { mcp: [{name, command, args, registry?}], skills: [{name, source}], plugins?: [...] }. Declarative only — reconstituted with per-item human consent via wrfi setup." },
         dryRun: { type: "boolean", description: "Validate without persisting" },
         apiKey: { type: "string", description: "API key for permanent creation" },
       },
@@ -84,6 +88,9 @@ const TOOLS = [
         message: { type: "string", description: "Version note (what changed)" },
         handoffMessage: { type: "string", description: "Note for the next agent (what to do next)" },
         expectedVersion: { type: "number", description: "Guard against races: reject with 409 if the creation isn't at this version. Omit and the server's current version is read and used automatically (safe by default)." },
+        status: { type: "string", enum: ["open", "done", "needs-human"], description: "Relay status — open: wants a next leg; done: complete; needs-human: waiting on a person" },
+        task: { type: "object", description: "Workflow-state layer: { objective, requestedAction, completed[], openQuestions[], decisions[], risks[{severity,text}], acceptanceCriteria[] }. Inherited across versions unless replaced; null clears." },
+        environment: { type: "object", description: "The workspace the next agent needs: { mcp: [{name, command, args, registry?}], skills: [{name, source}], plugins?: [...] }. Declarative only — reconstituted with per-item human consent via wrfi setup." },
         force: { type: "boolean", description: "Last-write-wins: skip the version check and overwrite whatever is current. Audited (response carries forced: true). Use only to intentionally discard concurrent changes." },
       },
     },
@@ -178,6 +185,22 @@ const TOOLS = [
     },
   },
   {
+    name: "wrfi_catchup",
+    description: "\"I last saw version N — what changed?\" Returns per-version messages, a unified diff (or a condensed summary), and the exact expectedVersion to write with next. THE way to resume work on a handoff you've seen before — cheaper than re-reading everything.",
+    inputSchema: {
+      type: "object",
+      required: ["shortId", "since"],
+      properties: {
+        shortId: { type: "string", description: "Short ID to catch up on" },
+        since: { type: "number", description: "The version you last read (>= 1)" },
+        summary: { type: "boolean", description: "Condensed form: headline + per-version messages, no diff body" },
+        password: { type: "string", description: "For password-protected creations" },
+        editToken: { type: "string" },
+        apiKey: { type: "string" },
+      },
+    },
+  },
+  {
     name: "wrfi_history",
     description: "Get version history for a creation. Shows version numbers, titles, messages, authors, and timestamps.",
     inputSchema: {
@@ -213,7 +236,13 @@ async function handleTool(name, args) {
       return await update(args.shortId, args);
 
     case "wrfi_append":
-      return await append(args.shortId, args);
+      // Retry-safe by default: one UUID per tool call, reused across the
+      // client's internal retries. Caller-supplied keys still win (useful for
+      // retrying across process restarts).
+      return await append(args.shortId, { ...args, idempotencyKey: args.idempotencyKey || crypto.randomUUID() });
+
+    case "wrfi_catchup":
+      return await catchup(args.shortId, args.since, args);
 
     case "wrfi_tail":
       // Shared api.js tail(shortId, n, opts) — clamp n to the server's 1-100.
@@ -242,7 +271,7 @@ async function handleTool(name, args) {
 export async function startMcpServer() {
   const server = new Server(
     // Keep in lockstep with package.json — this is what MCP clients display.
-    { name: "wrfi", version: "1.1.1" },
+    { name: "wrfi", version: "1.2.0" },
     { capabilities: { tools: {} } }
   );
 
