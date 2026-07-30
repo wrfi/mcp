@@ -52,11 +52,20 @@ const TOOLS = [
       required: ["title", "content"],
       properties: {
         title: { type: "string", description: "Title for the creation" },
-        content: { type: "string", description: "Text content" },
-        contentType: { type: "string" },
-        handoffMessage: { type: "string", description: "Note for the next agent" },
-        password: { type: "string" },
-        apiKey: { type: "string" },
+        content: { type: "string", description: "Text content (no base64 needed). Language auto-detected." },
+        contentType: { type: "string", description: "Type: code, text, image, audio, video. Auto-detected if omitted." },
+        description: { type: "string", description: "Brief description for discoverability" },
+        tags: { type: "array", items: { type: "string" }, description: "Tags for categorization" },
+        project: { type: "string", description: "Project name for grouping related creations" },
+        handoffMessage: { type: "string", description: "Note for the next agent — what was done, what to do next" },
+        secure: { type: "boolean", description: "8-char secret link (default: 4-char)" },
+        unlisted: { type: "boolean", description: "Hide from explore and search" },
+        password: { type: "string", description: "Password-protect the creation" },
+        status: { type: "string", enum: ["open", "done", "needs-human"], description: "Relay status — open: wants a next leg; done: complete; needs-human: waiting on a person" },
+        task: { type: "object", description: "Workflow-state layer: { objective, requestedAction, completed[], openQuestions[], decisions[], risks[{severity,text}], acceptanceCriteria[] }. Inherited across versions unless replaced; null clears." },
+        environment: { type: "object", description: "The workspace the next agent needs: { mcp: [{name, command, args, registry?}], skills: [{name, source}], plugins?: [...] }. Declarative only — reconstituted with per-item human consent via wrfi setup." },
+        dryRun: { type: "boolean", description: "Validate without persisting" },
+        apiKey: { type: "string", description: "API key for permanent creation" },
       },
     },
   },
@@ -79,10 +88,10 @@ const TOOLS = [
     description: "Update an existing creation (new version, same URL). Returns updated handoff bundle. Requires edit token or API key.",
     inputSchema: {
       type: "object",
-      required: ["shortId", "content"],
+      required: ["shortId"],
       properties: {
         shortId: { type: "string", description: "Short ID to update" },
-        content: { type: "string", description: "New text content" },
+        content: { type: "string", description: "New text content (optional — omit for a metadata-only update: status/task/environment change carries content forward)" },
         editToken: { type: "string", description: "2-word edit token (e.g. Blue-Castle)" },
         apiKey: { type: "string", description: "API key (alternative to edit token)" },
         message: { type: "string", description: "Version note (what changed)" },
@@ -272,7 +281,7 @@ async function handleTool(name, args) {
 export async function startMcpServer() {
   const server = new Server(
     // Keep in lockstep with package.json — this is what MCP clients display.
-    { name: "wrfi", version: "1.2.0" },
+    { name: "wrfi", version: "1.2.1" },
     { capabilities: { tools: {} } }
   );
 
