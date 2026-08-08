@@ -10,6 +10,8 @@ import crypto from "node:crypto";
 
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+const PKG_VERSION = createRequire(import.meta.url)("./package.json").version;
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -33,7 +35,7 @@ const TOOLS = [
         tags: { type: "array", items: { type: "string" }, description: "Tags for categorization" },
         project: { type: "string", description: "Project name for grouping related creations" },
         handoffMessage: { type: "string", description: "Note for the next agent — what was done, what to do next" },
-        secure: { type: "boolean", description: "8-char secret link (default: 4-char)" },
+        secure: { type: "boolean", description: "Short-id mode. Anonymous pushes DEFAULT to an unguessable 8-char link; pass false for the short speakable form (public or low-sensitivity work only). Authenticated pushes default to speakable; pass true for unguessable." },
         unlisted: { type: "boolean", description: "Hide from explore and search" },
         password: { type: "string", description: "Password-protect the creation" },
         status: { type: "string", enum: ["open", "done", "needs-human"], description: "Relay status — open: wants a next leg; done: complete; needs-human: waiting on a person" },
@@ -46,7 +48,7 @@ const TOOLS = [
   },
   {
     name: "wrfi_push_secure",
-    description: "Push with an 8-char secret link. Shorthand for wrfi_push with secure:true.",
+    description: "Push with an unguessable 8-char link. Anonymous pushes already default to this — use it to force the unguessable id on an AUTHENTICATED push, which otherwise defaults to the speakable form.",
     inputSchema: {
       type: "object",
       required: ["title", "content"],
@@ -58,7 +60,7 @@ const TOOLS = [
         tags: { type: "array", items: { type: "string" }, description: "Tags for categorization" },
         project: { type: "string", description: "Project name for grouping related creations" },
         handoffMessage: { type: "string", description: "Note for the next agent — what was done, what to do next" },
-        secure: { type: "boolean", description: "8-char secret link (default: 4-char)" },
+        secure: { type: "boolean", description: "Short-id mode. Anonymous pushes DEFAULT to an unguessable 8-char link; pass false for the short speakable form (public or low-sensitivity work only). Authenticated pushes default to speakable; pass true for unguessable." },
         unlisted: { type: "boolean", description: "Hide from explore and search" },
         password: { type: "string", description: "Password-protect the creation" },
         status: { type: "string", enum: ["open", "done", "needs-human"], description: "Relay status — open: wants a next leg; done: complete; needs-human: waiting on a person" },
@@ -281,7 +283,9 @@ async function handleTool(name, args) {
 export async function startMcpServer() {
   const server = new Server(
     // Keep in lockstep with package.json — this is what MCP clients display.
-    { name: "wrfi", version: "1.2.1" },
+    // Derived, not hardcoded: a handshake advertising a different version than
+    // the installed package is exactly the drift the compatibility matrix cites.
+    { name: "wrfi", version: PKG_VERSION },
     { capabilities: { tools: {} } }
   );
 
