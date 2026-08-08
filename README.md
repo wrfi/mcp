@@ -85,7 +85,8 @@ Or any AI can read the plain text handoff: `https://wr.fi/abcd?h`
 ## Links
 
 - [wr.fi](https://wr.fi) — the platform
-- [WRFI Spec](https://github.com/wrfi/wrfi-spec) — the open standard
+- [WRFI protocol contract](https://wr.fi/protocol/1.2/u.txt) — the version-pinned machine contract
+- [API documentation](https://wr.fi/docs) — the full reference
 - [CLI](https://github.com/wrfi/cli) — command-line tool
 - [API Docs](https://wr.fi/docs) — full reference
 
